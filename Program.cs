@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 enum Department
 {
     IT,
     HR,
-    Finance
+    Finance,
+    Marketing,
+    Production
 }
 
 class Person
@@ -39,7 +42,7 @@ class Employee : Person
 
             //Static employees
             Employee emp1 = new Employee(1, "John", "Doe", 50000, Department.IT);
-            Employee emp2 = new Employee(2, "Jane", "Smith", 60000, Department.HR);
+            Employee emp2 = new Employee(2, "William", "Doe", 60000, Department.HR);
 
             manager.AddEmployee(emp1);
             manager.AddEmployee(emp2);
@@ -50,36 +53,123 @@ class Employee : Person
             while (true)
             {
 
-                Console.WriteLine("\nChoose an action:");
-                Console.WriteLine("1. Add Employee");
-                Console.WriteLine("2. Remove Employee");
-                Console.WriteLine("3. Display All Employees");
-                Console.WriteLine("4. Calculate Total Salary");
-                Console.WriteLine("5. Exit");
+                Console.WriteLine("\nPress the corresponding number according to the action you wish to take: ");
+                Console.WriteLine("[1] Add Employee\n[2] Remove Employee\n[3] Display All Employees\n[4] Calculate Total Salary\n[5] Exit");
                 ConsoleKeyInfo keyInfo;
                 keyInfo = Console.ReadKey(true);
 
                 switch (keyInfo.Key)
                 {
                     case ConsoleKey.D1: //Ask for employee details
+                        int EmpIdNum = 0;
+                        bool ValidEmpId = false;
+                        do
+                        {
                         Console.WriteLine("Enter Employee ID:");
-                        int empId = Convert.ToInt32(Console.ReadLine());
-                        Console.WriteLine("Enter First Name:");
-                        string firstName = Console.ReadLine();
+                        string EmpId = Console.ReadLine();
+                        
+                            if (!int.TryParse(EmpId, out EmpIdNum)) //Checks if the string entered is only numbers. If there are letters, prompt message.
+                            {
+                                Console.WriteLine("Please enter only numbers.");
+                                continue;
+                            }
+                            if (EmpIdNum < 0)
+                            {
+                                Console.WriteLine("Please enter only a positive integer."); //Checks if the input digit is a negative number. If yes, prompt message.
+                                continue;
+                            }
+                            else
+                            {
+                                ValidEmpId = true;
+                            }
+                        } while (!ValidEmpId) ;
+                        Console.WriteLine("Enter First Name:"); //Names gets validated under AddEmployee();
+                        string FirstName = Console.ReadLine();
                         Console.WriteLine("Enter Last Name:");
-                        string lastName = Console.ReadLine();
-                        Console.WriteLine("Enter Salary:");
-                        double salary = Convert.ToDouble(Console.ReadLine());
-                        Console.WriteLine("Enter Department (IT, HR, Finance):");
-                        Department department = (Department)Enum.Parse(typeof(Department), Console.ReadLine());
-                        Employee newEmployee = new Employee(empId, firstName, lastName, salary, department);
-                        manager.AddEmployee(newEmployee);
+                        string LastName = Console.ReadLine();
+
+                        //Salary validation
+                        double salary = 0;
+                        bool ValidSalary = false;
+                        do
+                        {
+                            Console.WriteLine("Enter Salary:");
+                            string salaryInput = Console.ReadLine();
+                            if (!double.TryParse(salaryInput, out salary)) //Checks if the string entered is only numbers. If there are letters, prompt message.
+                            {
+                                Console.WriteLine("Please enter only numbers.");
+                                continue;
+                            }
+
+                            if (salary < 0)
+                            {
+                                Console.WriteLine("Please enter only a positive integer."); //Checks if the input digit is a negative number. If yes, prompt message.
+                                continue;
+                            }
+                            else
+                            {
+                                ValidSalary = true;
+                            }
+                        } while (!ValidSalary);
+
+                        Department department;
+                        bool ValidDepartment = false;
+                        do
+                        {
+                            Console.WriteLine("Enter Department (HR, IT, Finance, Marketing, Production) to assign employee to: ");
+                            if (Enum.TryParse(Console.ReadLine(), true, out department)) // Checks if the entered department is available
+                            {
+                                if (Enum.IsDefined(typeof(Department), department))
+                                {
+                                    Employee NewEmployee = new Employee(EmpIdNum, FirstName, LastName, salary, department);
+                                    manager.AddEmployee(NewEmployee);
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"Department: {department} does not exist. Please choose a valid department (HR, IT, Finance, Marketing, Production).");
+                                }
+                            }
+                            else
+                            {
+                                ValidDepartment = true;
+                            }
+                        } while (!ValidDepartment);
                         break;
 
-                    case ConsoleKey.D2: //Remove employee
-                        Console.WriteLine("Enter Employee ID to remove:");
-                        int empIdToRemove = Convert.ToInt32(Console.ReadLine());
-                        manager.RemoveEmployee(empIdToRemove);
+                    case ConsoleKey.D2: // Remove employee
+                        int IdNum = 0;
+                        bool FoundEmpId = false;
+                        do
+                        {
+                            Console.WriteLine("Enter Employee ID to remove:");
+                            string IdInput = Console.ReadLine();
+                            if (string.IsNullOrWhiteSpace(IdInput))  //Checks if input is null or white space
+                            {
+                                Console.WriteLine("Input is empty. Please try again.");
+                                continue;
+                            }
+                            if (!int.TryParse(IdInput, out IdNum)) //Checks if the string entered is only numbers. If there are letters, prompt message.
+                            {
+                                Console.WriteLine("Please enter only numbers.");
+                                continue;
+                            }
+                            if (IdNum < 0)
+                            {
+                                Console.WriteLine("Please enter only a positive integer."); //Checks if the input digit is a negative number. If yes, prompt message.
+                                continue;
+                            }
+                            int EmpIdToRemove;
+                            if (!int.TryParse(IdInput, out EmpIdToRemove))
+                            {
+                                Console.WriteLine("Invalid input. Please enter a valid integer ID.");
+                                continue;
+                            }
+                            else
+                            {
+                                FoundEmpId = true;
+                            }
+                        manager.RemoveEmployee(EmpIdToRemove);
+                        } while (!FoundEmpId);
                         break;
 
                     case ConsoleKey.D3: //Display all registered employees
@@ -91,7 +181,8 @@ class Employee : Person
                         break;
 
                     case ConsoleKey.D5: //Exit the program
-                        Console.WriteLine("See you next time.");
+                        Console.WriteLine("Shutting down system...");
+                        Thread.Sleep(1000);
                         Environment.Exit(0);
                         return;
 
@@ -109,20 +200,15 @@ class Employee : Person
     }
 }
 
-interface IManager
-{
-    void AssignEmployeeToDepartment(Employee employee, Department department);
-}
-
-class EmployeeManager : IManager
+class EmployeeManager
 {
     private List<Employee> employees = new List<Employee>(); //Stores employee data and checks input
 
     public void AddEmployee(Employee employee)
     {
-        if (String.IsNullOrWhiteSpace(employee.FirstName) || String.IsNullOrWhiteSpace(employee.LastName) || employee.FirstName.Any(char.IsDigit) || employee.LastName.Any(char.IsDigit))
+        if (String.IsNullOrWhiteSpace(employee.FirstName) || String.IsNullOrWhiteSpace(employee.LastName) || employee.FirstName.Any(char.IsDigit) || employee.LastName.Any(char.IsDigit)) //Checks if input is valid (if its null, or if there's a digit)
         {
-            Console.WriteLine("One or more input is invalid. Please try again.");
+            Console.WriteLine("Error: Invalid name.");
             Console.WriteLine("Reminder: Only use letters.");
             Thread.Sleep(1000);
             return;
@@ -138,21 +224,21 @@ class EmployeeManager : IManager
         }
     }
 
-    public void RemoveEmployee(int employeeId)
+    public void RemoveEmployee(int EmployeeId)
     {
-        var employeeToRemove = employees.Find(e => e.EmployeeId == employeeId); //Checks if employee exists
-        if (employeeToRemove != null)
+        var EmployeeToRemove = employees.Find(e => e.EmployeeId == EmployeeId); //Checks if employee exists
+        if (EmployeeToRemove != null)
         {
-            employees.Remove(employeeToRemove);
-            Console.WriteLine($"Employee {employeeToRemove.FirstName} {employeeToRemove.LastName} removed successfully."); //Notes that employee has been removed
+            employees.Remove(EmployeeToRemove);
+            Console.WriteLine($"Employee {EmployeeToRemove.FirstName} {EmployeeToRemove.LastName} removed successfully."); //Notes that employee has been removed
         }
         else
         {
-            Console.WriteLine($"Employee with ID {employeeId} not found."); //Notes that employee is non-existent
+            Console.WriteLine($"Employee with ID {EmployeeId} not found."); //Notes that employee is non-existent
         }
     }
 
-    public void DisplayAllEmployees() //Displays all employee datas by showing their ID, First Name, Last Name, Salary, and Department
+    public void DisplayAllEmployees() //Displays all employee data by showing their ID, First Name, Last Name, Salary, and Department
     {
         foreach (var employee in employees)
         {
@@ -164,19 +250,6 @@ class EmployeeManager : IManager
     {
         double totalSalary = employees.Sum(e => e.Salary);
         Console.WriteLine($"Total Salary of all employees: {totalSalary}");
-    }
-
-    public void AssignEmployeeToDepartment(Employee employee, Department department) //Shows which department the employee has been assigned to
-    {
-        if (Enum.IsDefined(typeof(Department), department))
-        {
-            employee.Department = department;
-            Console.WriteLine($"Employee {employee.FirstName} {employee.LastName} assigned to {department} department.");
-        }
-        else
-        {
-            Console.WriteLine($"Department: {department} does not exist. Please choose a valid department (IT, HR, Finance).");
-        }
     }
 }
 
